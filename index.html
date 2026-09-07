@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171a14">
+<link rel="manifest" href="./manifest.json"><link rel="icon" href="./icons/icon-192.png"><link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Elk Call Coach</title>
+<style>
+:root{--bg:#11140f;--card:#1c2119;--ink:#f4f0df;--muted:#aeb7a3;--accent:#d4a84f;--ok:#8db36c}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(#171b14,#0d100b);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:760px;margin:auto;padding:20px 16px 70px} h1{font-size:29px;margin:8px 0 3px}.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid #30382b;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 8px 24px #0004}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px} select,button{font:inherit}
+select{width:100%;background:#11150f;color:var(--ink);border:2px solid #59664e;padding:15px;border-radius:12px;font-size:17px} option{background:#11150f;color:var(--ink)}
+.mode{display:flex;gap:8px}.mode button{flex:1;padding:10px;border-radius:11px;border:1px solid #3a4434;background:#151a12;color:var(--ink)}.mode .active{border-color:var(--accent);color:var(--accent)}
+.record{width:150px;height:150px;border-radius:50%;display:block;margin:18px auto;border:7px solid #403b2b;background:#b53b2f;color:white;font-weight:800;font-size:18px}.record.on{animation:pulse 1s infinite;background:#e24b3b}@keyframes pulse{50%{transform:scale(1.04);box-shadow:0 0 0 14px #e24b3b22}}
+.status{text-align:center;color:var(--muted);min-height:24px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.metric{background:#121610;border-radius:12px;padding:12px}.metric b{font-size:24px;display:block}.metric span{color:var(--muted);font-size:12px}
+.score{font-size:56px;font-weight:900;color:var(--accent);text-align:center}.score small{font-size:18px;color:var(--muted)}
+canvas{width:100%;height:190px;background:#10130e;border-radius:12px}
+.feedback{line-height:1.55}.good{color:#b8d99b}.work{color:#e6c77f}
+audio{width:100%;margin-top:8px}.hidden{display:none}.tiny{font-size:12px;color:var(--muted)}
+.refs button{width:100%;padding:12px;margin:5px 0;background:#151a12;color:var(--ink);border:1px dashed #48543f;border-radius:10px}.refitem{background:#121610;border-radius:12px;padding:12px;margin-top:10px}.tag{display:inline-block;border:1px solid #56634c;border-radius:999px;padding:3px 8px;font-size:11px;color:#cbd7c1;margin-bottom:6px}
+</style></head>
+<body><main>
+<h1>ELK CALL COACH</h1><p class="sub">Record. Analyze. Improve.</p>
+<div class="mode" id="nav"><button class="active" onclick="showSection('coach',this)">Coach</button><button onclick="showSection('learn',this)">Learn</button><button onclick="showSection('seq',this)">Sequences</button></div><div id="netState" class="tiny"></div>
+<section id="coachSec"><div class="card">
+ <div class="mode"><button id="practiceBtn" class="active">Practice</button><button id="identifyBtn">Identify</button></div>
+ <br><label>Target call</label><select id="callType"></select>
+<div id="callGrid" class="grid" style="margin-top:10px"></div>
+ <button id="record" class="record">TAP TO<br>RECORD</button><div id="status" class="status">Microphone stays on your device.</div>
+</div>
+<div class="card">
+<b>Field Setup</b>
+<p class="tiny">Install this app to your Home Screen after hosting it over HTTPS. Open every reference once before leaving service. Then test with Airplane Mode.</p>
+<button id="installBtn" style="width:100%;padding:12px;border-radius:10px">Install Elk Coach</button>
+<button id="offlineTest" style="width:100%;padding:12px;border-radius:10px;margin-top:8px">Check Offline Readiness</button>
+<div id="readyState" class="tiny" style="margin-top:8px"></div>
+</div>
+<div id="historyCard" class="card"><b>Recent Practice</b><div id="history" class="tiny">No calls scored yet.</div></div>
+<div id="result" class="hidden">
+ <div class="card"><div id="score" class="score">--<small>/100</small></div><div id="guess" style="text-align:center"></div>
+ <div class="grid">
+  <div class="metric"><b id="pitchScore">--</b><span>PITCH / SHAPE</span></div>
+  <div class="metric"><b id="durationScore">--</b><span>DURATION</span></div>
+  <div class="metric"><b id="rangeScore">--</b><span>PITCH RANGE</span></div>
+  <div class="metric"><b id="energyScore">--</b><span>CONTROL</span></div>
+ </div></div>
+ <div class="card"><label>YOUR PITCH CONTOUR</label><canvas id="graph" width="680" height="190"></canvas><audio id="playback" controls></audio></div>
+ <div class="card feedback"><b>Coach</b><div id="feedback"></div></div>
+</div>
+</section><section id="learnSec" class="hidden">
+<div class="card refs"><b>CALL LIBRARY — HEAR IT, THEN TRY IT</b>
+<p class="tiny">Real-animal recordings are labeled REAL ELK. Expert demonstrations stay in their original YouTube player rather than being copied out of the video.</p>
+
+<div class="refitem"><span class="tag">REAL ELK · OFFLINE AFTER FIRST LOAD</span><br><b>Bull Bugle</b>
+<audio id="realBugle" controls preload="metadata"></audio><div id="offlineRef" class="tiny">Preparing offline copy…</div>
+<p class="tiny">NPS / Jim Pisarowicz. Listen for the rising whistle, sustained high section and natural finish.</p>
+<button onclick="practiceCall('Location / Advertising Bugle')">🎙 Practice a bugle</button></div>
+
+<div class="refitem"><span class="tag">REAL ELK · NPS LIBRARY</span><br><b>Cow Mew</b>
+<p>Short social vocalization. Listen for a smooth, relatively clean tonal shape rather than a harsh bugle-like rasp.</p>
+<button onclick="openNPS('romo')">▶ Hear NPS real-elk mew</button><button onclick="practiceCall('Cow Mew')">🎙 Practice Cow Mew</button></div>
+
+<div class="refitem"><span class="tag">REAL ELK · NPS LIBRARY</span><br><b>Calf Call</b>
+<p>Higher calf vocalization. This is the biological reference family for calf/contact and distress practice.</p>
+<button onclick="openNPS('yell')">▶ Hear NPS real elk calf</button><button onclick="practiceCall('Cow/Calf Contact')">🎙 Practice Calf / Contact</button><button onclick="practiceCall('Distressed Calf')">🎙 Practice Distressed Calf</button></div>
+
+<div class="refitem"><span class="tag">REAL ELK · NPS LIBRARY</span><br><b>Alarm Bark</b>
+<p>A cow elk alarm bark. Useful mainly for recognition: hearing this in the woods can mean elk are alarmed.</p>
+<button onclick="openNPS('romo')">▶ Hear NPS alarm bark</button><button onclick="practiceCall('Alarm Bark')">🎙 Practice / recognize</button></div>
+
+<div class="refitem"><span class="tag">REAL ELK · NPS LIBRARY</span><br><b>Bull Glug</b>
+<p>Low, short bull vocalization documented while a bull herds cows during the rut.</p>
+<button onclick="openNPS('romo')">▶ Hear NPS bull glug</button><button onclick="practiceCall('Glug')">🎙 Practice Glug</button></div>
+
+<div class="refitem"><span class="tag">EXPERT · YOUTUBE · ONLINE</span><br><b>Joel Turner — World Champion Elk Calling Techniques</b>
+<div style="position:relative;padding-top:56.25%;margin-top:10px"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:10px" src="https://www.youtube.com/embed/bynbSw53Tvc" title="Joel Turner elk calling techniques" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+<p class="tiny">Original ElkShape YouTube player. Requires internet; the video/audio is not copied into this app.</p></div>
+
+<div class="refitem"><span class="tag">TRAINING LABEL</span><br><b>Estrous-type / Separation / Round-up / Challenge</b>
+<p class="tiny">These remain useful caller-training targets, but they are not presented as unique scientific vocal classes. Use the real elk and expert material above to calibrate tone and delivery.</p>
+<button onclick="practiceCall('Estrous-Type Cow')">Estrous-type</button><button onclick="practiceCall('Lost / Separation Cow')">Separation</button><button onclick="practiceCall('Round-Up Bugle')">Round-up</button><button onclick="practiceCall('Challenge / Aggressive Bugle')">Challenge</button></div>
+</div></section>
+<section id="seqSec" class="hidden">
+<div class="card"><b>CALLING SEQUENCES</b><p class="tiny">Practice the decision process, not just isolated sounds. Named Joel Turner material below is a concise paraphrase of his publicly described approach.</p>
+<div id="seqList"></div></div>
+<div id="runner" class="card hidden"><b id="seqTitle"></b><div id="seqProgress" class="score" style="font-size:34px"></div><h3 id="seqStep"></h3><p id="seqWhy"></p><div id="seqTimer" class="status"></div><button id="seqAction" style="width:100%;padding:15px;border-radius:12px">START</button><button onclick="stopSequence()" style="width:100%;padding:10px;border-radius:12px;margin-top:8px">Exit sequence</button></div>
+</section>
+<p class="tiny">V2.0 learning + sequence build. Core recording, scoring, history, pitch graph, and coaching work locally. Scores are acoustic training estimates, not scientifically validated probabilities. It is a training estimate, not a biological classifier.</p>
+</main>
+<script>
+const calls={
+"Cow Mew":{dur:[.5,1.8],min:180,max:1000,range:[100,700]},
+"Cow/Calf Contact":{dur:[.3,1.4],min:200,max:1200,range:[100,800]},
+"Lost / Separation Cow":{dur:[1,3.8],min:170,max:1100,range:[180,850]},
+"Estrous-Type Cow":{dur:[.7,2.8],min:180,max:1200,range:[180,900]},
+"Distressed Calf":{dur:[.4,2.5],min:250,max:1500,range:[200,1100]},
+"Location / Advertising Bugle":{dur:[1.5,5.5],min:100,max:1800,range:[500,1600]},
+"Round-Up Bugle":{dur:[1.2,4.5],min:100,max:1700,range:[400,1500]},
+"Challenge / Aggressive Bugle":{dur:[1,5],min:80,max:1600,range:[350,1500]},
+"Alarm Bark":{dur:[.15,1.2],min:120,max:1200,range:[50,650]},
+"Glug":{dur:[.08,.8],min:70,max:700,range:[20,350]}
+};
+const sel=document.querySelector("#callType");
+Object.keys(calls).forEach(x=>sel.add(new Option(x,x)));
+const grid=document.querySelector("#callGrid");
+function renderCalls(){
+ grid.innerHTML="";
+ Object.keys(calls).forEach(name=>{
+   const b=document.createElement("button"); b.textContent=name;
+   b.style.cssText="padding:10px;border-radius:10px;border:1px solid #48543f;background:#151a12;color:#f4f0df;text-align:left";
+   if(name===sel.value)b.style.borderColor="#d4a84f";
+   b.onclick=()=>{setMode("practice");sel.value=name;renderCalls();document.querySelector("#record").scrollIntoView({behavior:"smooth",block:"center"})};
+   grid.appendChild(b);
+ });
+}
+sel.onchange=renderCalls; renderCalls();
+let mode="practice",ctx,stream,source,processor,frames=[],started=0,recording=false,rec,chunks=[];
+practiceBtn.onclick=()=>setMode("practice"); identifyBtn.onclick=()=>setMode("identify");
+function setMode(m){mode=m;practiceBtn.classList.toggle("active",m==="practice");identifyBtn.classList.toggle("active",m==="identify");sel.disabled=m==="identify";grid.style.display=m==="identify"?"none":"grid";renderCalls()}
+function autoCorrelate(buf,sr){
+ let rms=0; for(let x of buf)rms+=x*x; rms=Math.sqrt(rms/buf.length); if(rms<.015)return null;
+ let minLag=Math.floor(sr/1800),maxLag=Math.min(Math.floor(sr/70),buf.length-1),best=0,bestLag=0;
+ for(let lag=minLag;lag<=maxLag;lag++){let c=0;for(let i=0;i<buf.length-lag;i++)c+=buf[i]*buf[i+lag];if(c>best){best=c;bestLag=lag}}
+ return bestLag?sr/bestLag:null;
+}
+async function start(){
+ try{
+ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+ ctx=new (window.AudioContext||window.webkitAudioContext)(); source=ctx.createMediaStreamSource(stream); processor=ctx.createScriptProcessor(2048,1,1); frames=[];started=performance.now();
+ processor.onaudioprocess=e=>{if(!recording)return;let b=e.inputBuffer.getChannelData(0),p=autoCorrelate(b,ctx.sampleRate);let rms=Math.sqrt(b.reduce((s,x)=>s+x*x,0)/b.length);frames.push({t:(performance.now()-started)/1000,p,r:rms})};
+ source.connect(processor);processor.connect(ctx.destination);
+ chunks=[]; rec=new MediaRecorder(stream);rec.ondataavailable=e=>chunks.push(e.data);rec.start();recording=true;record.classList.add("on");status.textContent="Recording… tap the red button again when finished. Your score will open automatically.";
+ }catch(e){status.textContent="Microphone error: "+e.message}
+}
+function stop(){
+ if(!recording)return; recording=false;record.classList.remove("on");rec.onstop=()=>{playback.src=URL.createObjectURL(new Blob(chunks,{type:rec.mimeType}));analyze()};rec.stop();stream.getTracks().forEach(t=>t.stop());processor.disconnect();source.disconnect();ctx.close();
+}
+record.onclick=e=>{e.preventDefault(); recording?stop():start()};
+function clamp(x){return Math.max(0,Math.min(100,Math.round(x)))}
+function scoreProfile(name,stats){
+ let p=calls[name], mid=(p.min+p.max)/2, rmid=(p.range[0]+p.range[1])/2, dmid=(p.dur[0]+p.dur[1])/2;
+ let ps=clamp(100-Math.abs(stats.med-mid)/Math.max(mid,1)*75), ds=clamp(100-Math.abs(stats.dur-dmid)/dmid*60),
+ rs=clamp(100-Math.abs(stats.range-rmid)/Math.max(rmid,1)*65), es=clamp(100-Math.abs(stats.control-.55)*85);
+ return {total:clamp(ps*.32+ds*.25+rs*.28+es*.15),ps,ds,rs,es}
+}
+function analyze(){
+ let voiced=frames.filter(x=>x.p&&x.p>60&&x.p<2000); if(voiced.length<3){status.textContent="I couldn't get a clean pitch. Try again closer to the mic.";return}
+ let pitches=voiced.map(x=>x.p).sort((a,b)=>a-b), med=pitches[Math.floor(pitches.length/2)], lo=pitches[Math.floor(pitches.length*.1)],hi=pitches[Math.floor(pitches.length*.9)];
+ let dur=frames.length?frames.at(-1).t:0, energies=frames.map(x=>x.r),mean=energies.reduce((a,b)=>a+b,0)/energies.length;
+ let variance=energies.reduce((s,x)=>s+(x-mean)**2,0)/energies.length,control=Math.min(1,Math.sqrt(variance)/(mean||1));
+ let stats={med,range:hi-lo,dur,control};
+ let ranked=Object.keys(calls).map(n=>[n,scoreProfile(n,stats)]).sort((a,b)=>b[1].total-a[1].total);
+ let chosen=mode==="identify"?ranked[0]:[sel.value,scoreProfile(sel.value,stats)], s=chosen[1];
+ score.innerHTML=s.total+'<small>/100</small>';guess.innerHTML=mode==="identify"?`Most like <b>${chosen[0]}</b> — ${s.total}/100 prototype acoustic similarity`:`Target: <b>${chosen[0]}</b>`;
+ pitchScore.textContent=s.ps;durationScore.textContent=s.ds;rangeScore.textContent=s.rs;energyScore.textContent=s.es;
+ let goods=[],works=[]; if(s.ps>78)goods.push("Your core pitch sits well in this call's starting target.");else works.push("Core pitch is outside the current target band—listen back and adjust the center pitch.");
+ if(s.ds>78)goods.push("Call length is controlled.");else works.push(stats.dur<calls[chosen[0]].dur[0]?"Hold the call longer; it is ending early.":"Shorten the call; you're carrying it past the target.");
+ if(s.rs>78)goods.push("You are using a useful pitch sweep.");else works.push("Work on the pitch contour—the low-to-high movement differs from the target.");
+ goods.push(`Measured: median pitch ${Math.round(stats.med)} Hz; 10–90% pitch span ${Math.round(stats.range)} Hz; duration ${stats.dur.toFixed(2)} s.`);
+ feedback.innerHTML=(goods.length?`<p class="good">✓ ${goods.join("<br>✓ ")}</p>`:"")+(works.length?`<p class="work">Work on: ${works.join("<br>• ")}</p>`:"");
+ draw(voiced); result.classList.remove("hidden");status.textContent=`Analyzed ${stats.dur.toFixed(1)} seconds.`;
+saveHistory(chosen[0],s.total,stats);
+setTimeout(()=>result.scrollIntoView({behavior:"smooth",block:"start"}),80);
+}
+function draw(v){
+ let c=graph,g=c.getContext("2d");g.clearRect(0,0,c.width,c.height);g.strokeStyle="#3b4435";for(let y=30;y<c.height;y+=40){g.beginPath();g.moveTo(0,y);g.lineTo(c.width,y);g.stroke()}
+ let maxT=v.at(-1).t,minP=Math.min(...v.map(x=>x.p)),maxP=Math.max(...v.map(x=>x.p));g.strokeStyle="#d4a84f";g.lineWidth=3;g.beginPath();
+ v.forEach((x,i)=>{let px=x.t/maxT*c.width,py=c.height-15-(x.p-minP)/(maxP-minP||1)*(c.height-30);i?g.lineTo(px,py):g.moveTo(px,py)});g.stroke();
+}
+
+const REF_URL="https://upload.wikimedia.org/wikipedia/commons/8/88/American_Elk_Bugling.ogg";
+async function prepareReference(){
+ const a=document.querySelector("#realBugle"),msg=document.querySelector("#offlineRef");
+ try{
+   const cache=await caches.open("elk-audio-v1");
+   let r=await cache.match(REF_URL);
+   if(!r && navigator.onLine){
+     r=await fetch(REF_URL,{mode:"cors"});
+     if(r.ok){await cache.put(REF_URL,r.clone()); msg.textContent="✓ Saved for offline use after this first load."}
+   }
+   r=await cache.match(REF_URL);
+   if(r){
+     const blob=await r.blob(); a.src=URL.createObjectURL(blob);
+     if(!navigator.onLine)msg.textContent="✓ Playing the locally saved offline reference.";
+   } else { a.src=REF_URL; msg.textContent="Connect once to cache this reference for offline use."; }
+ }catch(e){a.src=REF_URL;msg.textContent="Reference will cache when browser storage permits."}
+}
+function updateNet(){netState.textContent=navigator.onLine?"● Online — app is preparing/storing offline assets":"● OFFLINE MODE — recorder and analyzer remain local"}
+addEventListener("online",()=>{updateNet();prepareReference()});addEventListener("offline",updateNet);updateNet();prepareReference();
+
+
+function saveHistory(name,total,stats){
+ let h=JSON.parse(localStorage.getItem("elkHistory")||"[]");
+ h.unshift({name,total,dur:stats.dur.toFixed(1),when:new Date().toLocaleString()});
+ h=h.slice(0,12); localStorage.setItem("elkHistory",JSON.stringify(h));renderHistory();
+}
+function renderHistory(){
+ let h=JSON.parse(localStorage.getItem("elkHistory")||"[]");
+ history.innerHTML=h.length?h.map(x=>`<div style="padding:7px 0;border-bottom:1px solid #30382b"><b>${x.total}/100</b> ${x.name} · ${x.dur}s<br>${x.when}</div>`).join(""):"No calls scored yet.";
+}
+renderHistory();
+let deferredPrompt=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;installBtn.classList.remove("hidden")});
+installBtn.onclick=async()=>{
+ if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
+ readyState.innerHTML="If Chrome has not offered Install yet: reload this page once, wait 5–10 seconds, then tap Chrome ⋮ → Add to Home screen → Install app. If it only says Create shortcut, the new service worker may still be updating; close Chrome and reopen this page.";
+};
+offlineTest.onclick=async()=>{
+ let shell=await caches.open("elk-coach-shell-v3"), audio=await caches.open("elk-audio-v1");
+ let page=await shell.match("./index.html"), ref=await audio.match(REF_URL);
+ readyState.innerHTML=(page?"✓ App shell cached<br>":"✗ App shell not cached<br>")+(ref?"✓ Real-elk reference cached<br>":"✗ Reference audio not cached yet<br>")+"Recorder/analyzer: ✓ on-device";
+};
+
+
+function showSection(which,btn){
+ ["coachSec","learnSec","seqSec"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+ document.getElementById(which+"Sec").classList.remove("hidden");
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("active")); if(btn)btn.classList.add("active");
+ scrollTo({top:0,behavior:"smooth"});
+}
+function practiceCall(name){
+ showSection("coach",document.querySelector("#nav button"));
+ setMode("practice"); sel.value=name; renderCalls();
+ setTimeout(()=>record.scrollIntoView({behavior:"smooth",block:"center"}),100);
+}
+function openNPS(which){
+ const u=which==="yell"?"https://www.nps.gov/yell/learn/photosmultimedia/sounds-elk.htm":"https://www.nps.gov/romo/learn/photosmultimedia/sounds-wildlife-soundscapes.htm";
+ window.open(u,"_blank","noopener");
+}
+const sequences=[
+ {name:"Joel Turner — Sound Check",note:"Use when entering a new terrain feature / basin.",steps:[
+  ["Distressed Calf","Send a believable distressed-calf series through the terrain."],
+  ["LISTEN 20 sec","Listen for a bull to answer. Don't immediately cover his response."],
+  ["Distressed Calf","If needed, repeat the calf series."],
+  ["LISTEN 30 sec","If the bull answers again and has moved toward you, prepare for him to continue coming."],
+  ["SET UP","If he is coming and appears cow-less, stop overcalling and get ready."]
+ ]},
+ {name:"Joel Turner — Bull With Cows",note:"His publicly described priority when a herd bull has cows.",steps:[
+  ["Bull Calling Cows","Use a short, raspy bull-calling-cows style bugle; avoid automatically turning it into a challenge."],
+  ["LISTEN 20 sec","Read the bull and cows. The goal is interaction with his cows, not simply yelling at him."],
+  ["Distressed Calf","Fallback if that approach fails or you cannot effectively reach the cows."],
+  ["LISTEN 30 sec","Watch/listen for cows investigating; a bull may follow them."]
+ ]},
+ {name:"Locate & Move",note:"Generic practice sequence for finding a vocal bull.",steps:[
+  ["Location / Advertising Bugle","Send one clean location-style bugle."],
+  ["LISTEN 45 sec","Give the woods time. Mark direction and distance if you get an answer."],
+  ["MOVE / WIND","Use terrain and wind to close distance before calling again."],
+  ["Location / Advertising Bugle","Repeat only when you need to relocate him."]
+ ]},
+ {name:"Calf Conversation",note:"Generic social/calf practice.",steps:[
+  ["Cow/Calf Contact","Give a clean contact/calf call."],
+  ["LISTEN 10 sec","Leave realistic space."],
+  ["Cow Mew","Answer with a short social mew."],
+  ["LISTEN 15 sec","Listen before adding more sound."],
+  ["Lost / Separation Cow","Escalate only if practicing a separated-animal scenario."]
+ ]}
+];
+let activeSeq=null,seqIndex=0,timerInt=null;
+function renderSequences(){
+ seqList.innerHTML=sequences.map((x,i)=>`<div class="refitem"><b>${x.name}</b><p class="tiny">${x.note}</p><button onclick="startSequence(${i})">▶ Practice sequence</button></div>`).join("");
+}
+function startSequence(i){activeSeq=sequences[i];seqIndex=0;runner.classList.remove("hidden");seqTitle.textContent=activeSeq.name;showSeqStep();runner.scrollIntoView({behavior:"smooth"})}
+function showSeqStep(){
+ const [step,why]=activeSeq.steps[seqIndex];seqProgress.textContent=`${seqIndex+1}/${activeSeq.steps.length}`;seqStep.textContent=step;seqWhy.textContent=why;seqTimer.textContent="";
+ const m=step.match(/LISTEN (\d+)/);
+ if(m){seqAction.textContent=`START ${m[1]}s LISTEN TIMER`;seqAction.onclick=()=>runTimer(+m[1]);}
+ else if(calls[step]){seqAction.textContent="🎙 PRACTICE THIS CALL";seqAction.onclick=()=>{practiceCall(step)};}
+ else {seqAction.textContent="NEXT";seqAction.onclick=nextSeq;}
+}
+function runTimer(n){clearInterval(timerInt);let x=n;seqTimer.textContent=`Listen… ${x}s`;timerInt=setInterval(()=>{x--;seqTimer.textContent=x>0?`Listen… ${x}s`:"Listen window complete";if(x<=0){clearInterval(timerInt);seqAction.textContent="NEXT";seqAction.onclick=nextSeq}},1000)}
+function nextSeq(){if(seqIndex<activeSeq.steps.length-1){seqIndex++;showSeqStep()}else{seqProgress.textContent="COMPLETE";seqStep.textContent="Sequence finished";seqWhy.textContent="Review what happened before adding more calling.";seqAction.textContent="RUN AGAIN";seqAction.onclick=()=>startSequence(sequences.indexOf(activeSeq))}}
+function stopSequence(){clearInterval(timerInt);runner.classList.add("hidden");activeSeq=null}
+renderSequences();
+
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+</script></body></html>
