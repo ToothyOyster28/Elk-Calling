@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#171a14">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json"><link rel="icon" href="./icons/icon-192.png"><link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>Elk Call Coach</title>
 <style>
 :root{--bg:#11140f;--card:#1c2119;--ink:#f4f0df;--muted:#aeb7a3;--accent:#d4a84f;--ok:#8db36c}
@@ -33,7 +33,7 @@ audio{width:100%;margin-top:8px}.hidden{display:none}.tiny{font-size:12px;color:
 <div class="card">
 <b>Field Setup</b>
 <p class="tiny">Install this app to your Home Screen after hosting it over HTTPS. Open every reference once before leaving service. Then test with Airplane Mode.</p>
-<button id="installBtn" class="hidden" style="width:100%;padding:12px;border-radius:10px">Install Elk Coach</button>
+<button id="installBtn" style="width:100%;padding:12px;border-radius:10px">Install Elk Coach</button>
 <button id="offlineTest" style="width:100%;padding:12px;border-radius:10px;margin-top:8px">Check Offline Readiness</button>
 <div id="readyState" class="tiny" style="margin-top:8px"></div>
 </div>
@@ -203,7 +203,10 @@ function renderHistory(){
 renderHistory();
 let deferredPrompt=null;
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;installBtn.classList.remove("hidden")});
-installBtn.onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;installBtn.classList.add("hidden")}};
+installBtn.onclick=async()=>{
+ if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
+ readyState.innerHTML="If Chrome has not offered Install yet: reload this page once, wait 5–10 seconds, then tap Chrome ⋮ → Add to Home screen → Install app. If it only says Create shortcut, the new service worker may still be updating; close Chrome and reopen this page.";
+};
 offlineTest.onclick=async()=>{
  let shell=await caches.open("elk-coach-shell-v3"), audio=await caches.open("elk-audio-v1");
  let page=await shell.match("./index.html"), ref=await audio.match(REF_URL);
