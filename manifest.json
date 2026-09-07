@@ -1,0 +1,9 @@
+{
+  "name": "Elk Call Coach 2.0",
+  "short_name": "Elk Coach",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#11140f",
+  "theme_color": "#171a14",
+  "description": "Offline elk-call practice coach"
+}
